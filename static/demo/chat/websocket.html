@@ -1,0 +1,48 @@
+﻿<title>正在连接。。。</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="http://127.0.0.1/public/js/jquery.min.js"></script> 
+<script>   
+    var ws = new WebSocket('ws://dage.com/7bad5b175782143734985f935c109e33');
+    ws.onopen = function()
+    {
+        document.title = '超短即时聊天 - 连接成功';
+        console.log('open');
+        ws.onmessage = function (evt) {
+            var data = JSON.parse(evt.data);
+            var d = data[1];
+            switch (data[0])
+            {
+                case 'say': 
+                    $("#msglist").append($('<div>').html(d[0] + "<br />" + d[1]));
+                default:
+
+            }
+        };
+        ws.onclose = function (evt) {
+            console.log('WebSocketClosed!');
+        };
+        ws.onerror = function (evt) {
+            alert('WebSocketError!');
+        };
+    }; 
+</script>
+<div id="msglist"></div>
+<form onSubmit=" ws.send(JSON.stringify(['say', [$('#name').val(), $('#text').val()]])); return false;">
+<table width="100%" border="1">
+  <tr>
+    <td>名字：</td>
+    <td><input id="name" value="haha" /></td>
+    </tr>
+  <tr>
+    <td>信息：</td>
+    <td><textarea name="text" id="text"></textarea></td>
+    </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>
+	<button type="submit">发送</button></td>
+    </tr>
+</table> 
+
+</form>
+ 

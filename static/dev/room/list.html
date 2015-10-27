@@ -1,0 +1,69 @@
+﻿<!--
+   <div class="blog-masthead">
+       <div class="container">
+           <nav class="blog-nav">
+               <a class="blog-nav-item active " href="./list.html">房间</a>
+               <a class="blog-nav-item " href="./modify.html">个人信息</a>
+               <a class="blog-nav-item " href="./create.html">申请房间</a>
+           </nav>
+       </div>
+   </div>-->
+<style>
+    .ho{ border:none; display:none;}
+    blockquote { background: #fff; }
+    blockquote:hover { border-color: #337ab7; box-shadow: 0px 0px 4px #AAA; } 
+</style>
+<script>
+    $(function () {
+        $(' blockquote').click(function () {
+            $('.ho', this).toggle();
+        });
+    })
+</script>
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-3  text-center" style="margin-top:26px; padding:0 14px">
+            <a href="./create.html" class="thumbnail">
+                <i style="font-size:120px" class="glyphicon glyphicon-plus"></i>
+                <p>添加新房间</p>
+            </a>
+        </div>
+        <div class="col-md-9" style="margin-bottom:10px;">
+            <div class="page-header">
+                <h1>房间列表 <small>  </small></h1>
+            </div>
+            <div class="hidden-sm hidden-xs">aa</div>
+        </div>
+
+    </div>
+    <% if(!list.length){ %> 
+    <blockquote>
+        还没有添加房间
+    </blockquote>
+    <% }else list.map(function(item){ %>
+        <blockquote>
+            <div class="row">
+                <div class="col-md-10">
+                    <h2><%= item.name %></h2>
+                    <pre title="复制地址到你的应用进行通信"><%- item['urlkey']%></pre>
+<pre class="ho">
+房间绑定地址：
+<%- item['host']%>
+</pre>
+
+                    <small><%- item.date %></small>
+
+                </div>
+                <div class="col-md-2 ">
+                    <ul class="pager">
+                        <li><a href="./<%=item.rkey%>/modify.html" style="margin-bottom:10px;">修改</a></li>
+                        <li><a onclick="return confirm('你确定要删除房间？')" href="./<%=item.rkey%>/delete.html" style=" margin-right:10px;">删除</a></li>
+                    </ul>
+
+
+                </div>
+            </div>
+        </blockquote>
+        <% });%>
+</div>

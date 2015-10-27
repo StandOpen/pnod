@@ -1,0 +1,44 @@
+﻿<title>正在连接。。。</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="/public/js/jquery.min.js"></script>
+<script type="text/javascript" src="/public/js/socket.io.js"></script>
+<script> 
+    //客户端 连接  
+    var socket = io('ws://dage.com/5adef4d0ce7db44447cbd14a7b7f9063',{ transports: ['websocket'] });
+    socket.on( 'connect', function () {
+        document.title = '当前在线人数统计';
+
+        socket.emit('find@server', /ges/);
+        socket.emit('find@server', 'lv10', function() {
+
+        })
+		
+		
+		//获取@server
+		socket.emit('init@server',function(cid){
+			console.log(cid);	
+		});
+		socket.emit('data@server', 'CONN_COUNT', 'num');
+		 
+		//推送@server
+		socket.emit('bind@server', 'CONN_COUNT', 'num');
+		socket.on('num', function cbNumber(num) {
+		    $("#out").html('当前人数：' + num);
+		});
+		
+		//加入分组-发送消息给分组-分组接收消息
+		socket.emit('join@server','VM1');
+		socket.emit('join@VM1','VM2'); 
+		/////// VM1 ///////
+		socket.on('join',function(vm){
+			console.log(vm); // -> 'VM2'
+		});
+ 
+	 
+		socket.emit('find@server', 'VM1', function (cs) {
+		    console.log(cs);
+		}); 
+		
+    })  
+</script>
+<div id="out"></div>

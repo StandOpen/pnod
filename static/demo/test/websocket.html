@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="/public/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/public/js/socket.io.js"></script> 
+    <title>test</title>
+</head>
+<body>
+    <form name="form1"  action="">
+        <input type="text" id="of" value="7bad5b175782143734985f935c109e33" size="36" />
+      <input type="submit" id="btn" />
+    </form>
+    <script> 
+        $(function () { 
+            $("form").submit(function () {
+                try
+                { 
+				    var hs = '<%- host %>'
+                    var src = ('ws://' + (hs[0]=='<'?location.host:hs) +'/'+ $('#of').val());
+                    window.socket = new WebSocket(src);
+                } catch (e)
+                {
+                    console.log(e);
+
+                }
+				return false;
+                /* setTimeout(function () {
+                    socket.on('connect', function () {
+                        console.log('success');
+                    });
+                },1000);
+                
+                socket.on('connect', function () {
+                    console.log('success');
+                });
+                socket.on('connect', function () {
+                    console.log('success');
+                });*/
+            })
+
+        });
+
+
+    </script> 
+
+</body>
+</html>

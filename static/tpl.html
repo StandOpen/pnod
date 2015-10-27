@@ -1,0 +1,129 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>sockpp</title> 
+    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">  
+    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">  
+    <script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>  
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+     
+    <link rel="stylesheet" type="text/css" href="/public/css/blog.css">
+    <style> 
+        .sec{ float:right;}
+        .sec a{ color:transparent;}
+    </style> 
+</head>
+<body >
+    <div class="blog-masthead index">
+        <div class="container">
+            <nav>
+                <div class="pull-left logo ">
+                    <a class="blog-nav-item  " href="/index.html"> <b>sock</b>pp</a>
+                </div>
+                <div class="pull-left blog-nav hidden-xs   ">
+                    <a class="blog-nav-item  " href="/doc/index.html">文档</a>
+                    <!-- <a class="blog-nav-item  "  href="/demo/index.html">演示</a>-->
+                    <a class="blog-nav-item " href="/note/index.html">留言</a>
+                    <a class="blog-nav-item  " href="/about/index.html">关于</a>
+                </div>
+
+                <div class="pull-right dropdown  hidden-xs  ">
+                    <% var name = req.session && req.session.user && req.session.user.username;
+                        name && ( name += req.session.user.valid?'':'(邮箱未验证)');
+                    %>
+                    <% if(name){ %>
+                    <a href="#" class="blog-nav-item  dropdown-toggle" data-toggle="dropdown" role="button"
+                       aria-haspopup="true" aria-expanded="false"><%- name %></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="/dev/room.html">房间列表</a>
+                        </li>
+                        <li>
+                            <a href="/dev/modify.html">个人信息</a>
+                        </li>
+                        <li>
+                            <a href="/auth/logout.html">注销</a>
+                        </li>
+                    </ul>
+                    <% }else{ %>
+                    <a class=" blog-nav-item " href="/auth/login.html">登陆</a>
+                    <% } %>
+                </div>
+                <div class="pull-right dropdown visible-xs-block">
+                    <a href="#" class="blog-nav-item  dropdown-toggle" data-toggle="dropdown" role="button"
+                       aria-haspopup="true" aria-expanded="false"><%- name?name:'<span class="caret "></span>' %></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="/doc/index.html">文档</a>
+                        </li>
+                        <!--<li>
+          <a href="/demo/index.html">演示</a>
+        </li>-->
+                        <li>
+                            <a href="/note/index.html">留言</a>
+                        </li>
+                        <li>
+                            <a href="/about/index.html">关于</a>
+                        </li>
+                        <li role="separator" class="divider"></li>
+                        <% if(name){  %>
+                        <li>
+                            <a href="/dev/room.html">房间列表</a>
+                        </li>
+                        <li>
+                            <a href="/dev/modify.html">个人信息</a>
+                        </li>
+                        <li>
+                            <a href="/auth/logout.html">注销</a>
+                        </li>
+                        <% }else{ %>
+                        <li>
+                            <a href="/auth/login.html">登陆</a>
+                        </li>
+                        <% } %>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+    <div class="main">
+        <% __append(include(content)) %>
+    </div>
+    <footer class="blog-footer" style="position: relative;
+top: -4px;">
+        <div class="container">
+            <p class="out">当前连接数为: </p>
+            <p>
+                你可以选择进行
+                <a href="/auth/login.html">登陆</a>
+                或
+                <a href="/auth/reg.html">注册</a>
+                <span class="sec"><script type="text/javascript">var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://"); document.write(unescape("%3Cspan id='cnzz_stat_icon_1256641703'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s95.cnzz.com/z_stat.php%3Fid%3D1256641703' type='text/javascript'%3E%3C/script%3E"));</script></span>
+            </p>
+        </div>
+    </footer>
+    <script type="text/javascript" src="/public/js/socket.io.js"></script>
+    <script>
+        $(function () {
+            var w=1;
+            $('[href="' + location.pathname + '"]').addClass('active');
+            var socket = io('ws://' + location.host + '/50143t4', { transports: ['websocket'] });
+            $('.out').html('正在连接.');
+            setTimeout(function T() {
+                w++;
+                if (!socket.connected && w < 10) setTimeout(T, 1000);
+                $('.out').html($('.out').html() + '.');
+            }, 1000);
+            socket.on('connect', function () {
+                socket.emit('bind@server', 'CONN_COUNT', 'num');//推送当前人数@server
+                socket.emit('data@server', 'CONN_COUNT', 'num'); //获取当前人数@server
+                socket.on('num', function (num) {
+                    $('.out').html('当前连接数为：' + num);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

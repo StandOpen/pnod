@@ -1,0 +1,40 @@
+﻿<title>正在连接。。。</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="/public/js/jquery.min.js"></script>
+<script type="text/javascript" src="/public/js/socket.io.js"></script>
+<script> 
+    //客户端 连接 
+    var socket = io.connect('ws://dage.com/7bad5b175782143734985f935c109e33'); //未配置服务器 使用自己的host
+    socket.on( 'connect', function () {
+        document.title = '超短即时聊天 - 连接成功';
+        console.log('connect');
+        //事件：自定义消息
+        socket.on('say', function (d) {
+            $("#msglist").append($('<div>').html(d[0] + "<br />" + d[1]));
+        });
+        socket.on('error', function () {
+            alert('WebSocketError!');
+        });
+    })
+
+</script>
+<div id="msglist"></div>
+<form onSubmit="socket.emit('say',[$('#name').val(), $('#text').val() ] ); return false;">
+<table width="100%" border="1">
+  <tr>
+    <td>名字：</td>
+    <td><input id="name" value="haha" /></td>
+    </tr>
+  <tr>
+    <td>信息：</td>
+    <td><textarea name="text" id="text"></textarea></td>
+    </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>
+	<button type="submit">发送</button></td>
+    </tr>
+</table> 
+
+</form>
+ 

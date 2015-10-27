@@ -1,0 +1,158 @@
+<h1>
+	<strong>服务器文档</strong> 
+</h1>
+<hr />
+<h2>
+	消息发送
+</h2>
+<p>
+	根据原有的的发送接收消息的模式上添加了一个接收者的可选参数，
+</p>
+<p>
+	当客户端发送消息事件而且指定接收者时，
+</p>
+<p>
+	服务器会将消息和消息内容转发到相应的接收者上。
+</p>
+<pre>socket.emit( "事件@可选接收者"&nbsp; ,"消息内容");</pre>
+<p>
+	<span style="background-color:#000000;color:#000000;">*我反正是建议使用全小写字母</span> 
+</p>
+<p>
+	*如果没有接收者的话就是全体发送。<span style="background-color:#000000;color:#000000;"> 这样设计如何？</span> 
+</p>
+<p>
+	*服务器定义的接收者分为下面几种
+</p>
+<ul>
+	<li style="vertical-align:middle;">
+		server&nbsp; &nbsp; &nbsp;消息发送到服务器接收&nbsp;详细<a href="#on">服务器消息</a> 
+	</li>
+	<li style="vertical-align:middle;">
+		other&nbsp; &nbsp; &nbsp; &nbsp;消息发送给除了自己的所有的客户端
+	</li>
+	<li>
+		"组名字" &nbsp;消息发送到自定义的组 详细<a href="#join">客户端分组</a> 
+	</li>
+	<li style="vertical-align:middle;">
+		"客户ID" &nbsp; 消息发送给指定的客户端ID 详细<a href="#init">获取数据</a> 
+	</li>
+	<li style="vertical-align:middle;">
+		<span style="background-color:#000000;color:#000000;">master&nbsp; &nbsp; &nbsp;发送给由服务器自动分配的其中一台客户端 定义为主机&nbsp; 多个主机?</span> 
+	</li>
+</ul>
+<a name="undefined"></a> 
+<hr />
+<h2>
+	服务器消息
+</h2>
+<p>
+	当客户端发送消息时指定接收者为server时 服务器会根据接收到的消息进行操作：
+</p>
+<h3>
+	消息推送
+</h3>
+<p>
+	可以让客户端接收到服务器的消息，例如客户端加入/离开等系统消息 ，
+</p>
+<p>
+	接收系统消息需要先进行绑定事件 ，
+</p>
+<p>
+	绑定之后再写一个接收事件就可以接收到服务器推送回来的系统消息
+</p>
+<pre>socket.emit("push@server","需要推送的系统事件","客户端自定义的消息名");
+socket.on("客户端自定义的消息名",function(){
+   //接收到推送了
+}); </pre>
+<p>
+	*支持的server推送消息：
+</p>
+<ul>
+	<li style="vertical-align:middle;">
+		CONN_ENTER&nbsp;&nbsp; 客户端加入
+	</li>
+	<li style="vertical-align:middle;">
+		CONN_EXIT&nbsp; &nbsp; &nbsp;&nbsp; 客户端退出
+	</li>
+	<li style="vertical-align:middle;">
+		CONN_COUNT&nbsp; 客户端人数改变
+	</li>
+	<li style="vertical-align:middle;">
+		<span style="color:#000000;background-color:#000000;">还没有想到其他的有待补充。。。</span> 
+	</li>
+</ul>
+<h3>
+	获取数据
+</h3>
+<p>
+	向服务器发送查询 成功后回调返回查询的数据
+</p>
+<pre>socket.emit("data@server","名称","用于接收数据的消息名");  
+socket.on("用于接收数据的消息名",function(data){
+    //接收到数据了
+}); </pre>
+<p>
+	或者使用另外一种简洁的写法
+</p>
+<pre>socket.emit("data@server","名称",function(data){
+    //接收到数据了
+}); </pre>
+<p>
+	*支持的查询：
+</p>
+<ul>
+	<li style="vertical-align:middle;">
+		CONN_COUNT <span>获取</span>当前加入的人数
+	</li>
+	<li style="vertical-align:middle;">
+		CONN_CID&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;获取当前客户端的ID
+	</li>
+	<li style="vertical-align:middle;">
+		<span style="background-color:#000000;color:#000000;">CONN_TIME &nbsp; &nbsp; 获取服务器毫秒数（计算延迟</span> 
+	</li>
+	<li style="vertical-align:middle;">
+		<span style="color:#000000;background-color:#000000;">还没有想到其他的有待补充。。。</span> 
+	</li>
+</ul>
+<a name="undefined"></a> 
+<hr />
+<h2>
+	客户端分组
+</h2>
+<p>
+	当消息需要发送到指定的几个客户端时可以使用客户分组，例如队伍聊天。
+</p>
+<p>
+	加入组时不需要先创建才能加入,直接指定组名就可以，
+</p>
+<h3>
+	加入/离开组
+</h3>
+<p>
+	<span style="font-size:14px;line-height:1.42857143;">发送join消息到服务器可以将自己添加到自定义的分组，例如</span> 
+</p>
+<pre>socket.emit("join@server","组名");</pre>
+<p>
+	需要离开组 可以发送leave到服务器
+</p>
+<pre>socket.emit("leave@server","组名");</pre>
+<h3>
+	查找分组客户端
+</h3>
+<p>
+	创建分组后还可以查找分组客户端ID，查找成功后返回客户端id数组 ，失败就返回空数组
+</p>
+<p>
+	*利用查找客户端分组还能很方便的查找该分组下的连接数
+</p>
+<pre>socket.find("find@server","组名",function(ids){
+    //ids : [客户端ID,客户端ID,客户端ID ... ]
+});</pre>
+<p>
+	<br />
+</p>
+<hr />
+<br />
+<br />
+<!-- 求房间人数 房间和 （游戏接口）是对应的 其他（游戏接口）不能乱进入房间 防止那些自己游戏未允许就用别人的接口，自己不注册又霸占别人的游戏空间 如何证明游戏是否为正版 html5游戏：每次玩都要下载，下载地址可以证明游戏 --> <br />

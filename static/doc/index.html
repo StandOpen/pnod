@@ -1,0 +1,39 @@
+ <script>
+$(function(){
+	$('.ajaxcontent').load('./file/html5.html');
+	$('.ajaxload a').click(function(e) {
+		$('.ajaxcontent').load(this.href);
+        return false;
+    });	
+	$('.ajaxload ').click(function (e) {
+	    $('a', this).toggle();;
+	    $('b', this).toggle();;
+    });
+});
+</script>
+<style>
+.ajaxload{position:fixed; margin-top: 10px; margin-left:-36px; z-index:10;} 
+@media(min-width:997px){
+.ajaxload{ max-width:200px;} 
+.ajaxcontent{ margin-left:16.6666%}
+}
+
+@media(max-width:997px){
+	 .ajaxcontent{ margin-top:80px}
+}
+</style>
+<div class="container  ">
+  <div class="col-md-2 ajaxload "  >
+  <div class="img-thumbnail">
+      <b style="display:none">></b>
+    <% file.map(function(name){ %>
+    <a class="badge bg-primary " style="margin:10px; padding:7px 15px"  href="./file/<%-name%>">
+    <%-name.replace('.html','')%>
+    </a>
+    <% }); %></div>
+  </div>
+  <div class="col-md-10 ajaxcontent">
+    
+  </div>
+</div>
+ 
