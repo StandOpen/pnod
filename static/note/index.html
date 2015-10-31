@@ -1,6 +1,7 @@
 ﻿ 
 <style>
-.textarea textarea{ width:100%;height:100%}
+.textarea textarea{ width:100%;height:100%;}
+.textarea textarea.ime{ background-color:transparent;border-color:#f00}
 .textarea {
     white-space:pre-wrap;
 	position: absolute;
@@ -13,32 +14,36 @@
 .users {
 	line-height: 35px;
 }
-.as{ position:absolute;
+#content{ position:relative; left:50%;width:50%;}
+#pps{  background:transparent ; color: rgba(0, 0, 0, 0.5);}
+.as{ position:absolute; 
 	top: 50px;
 	bottom: 80px;
 	left: 10px;
 	right: 10px;}
-.ifl{ position:absolute; z-index:999; border:none;}
+.ifl{ position:absolute; z-index:999;  width:13px;  }
 </style>
 <div class="as">
     <div class="container  " style="   position:relative; height:100%;border-top: 6px solid #3FA8C7;">
-        <div class="users"></div>
-        <div class="textarea" id="pps"></div>
+        <div class="users"></div> 
         <div class="textarea"><textarea cols="99" rows="30" id="content"></textarea></div>
+        <div class="textarea"><textarea cols="99" rows="30" id="pps"></textarea></div>
     </div>
 </div>
 
 
 <script>
         $(function () {
-            function meg(str1, str2) {
-                if (str1 == str2) return '';
+            function meg(str1, str2,cb) {
+                if (str1 == str2) return false;
+                var l = 0, r = 0;
                 var l1 = str1.length; l2 = str2.length, len = Math.max(l1, l2);
                 for (var i = 0; i < len; i++)
                     if (str1[i] != str2[i])
                     {
                         str1 = str1.substr(i);
                         str2 = str2.substr(i);
+                        l = i;
                         break;
                     }
                 var l1 = str1.length; l2 = str2.length, len = Math.max(l1, l2);;
@@ -47,17 +52,12 @@
                     {
                         str1 = str1.substr(0, l1 - i + 1);
                         str2 = str2.substr(0, l2 - i + 1);
+                        r = i
                         break;
-                    }
-                if (str1 != str2)
-                {
-                    if (str1 && str2)
-                    {
-                        console.log('loop...');
-                    }
-                }
-                return str1 || str2;
-            }
+                    } 
+                cb(str1, str2, l, r);
+                return true;
+            } 
 
             //模拟选中区域 & 获取选中的坐标位置
             $.fn.IRange = function (p) {
@@ -71,21 +71,25 @@
                         {
                             if (p > 0) element.setSelectionRange(element.selectionStart, element.selectionStart + p);
                             if (p < 0) element.setSelectionRange(element.selectionStart + p, element.selectionStart);
+                            console.log([element.selectionStart, element.selectionEnd]);
                         }
                     }
                     else
-                    {
+                    { 
                         var a = p[0], b = p[1];
-                        if (b > a)
-                            element.setSelectionRange(~~a, ~~b);
+                        if (b > a){ 
+                            element.setSelectionRange(~~a, ~~b); 
+                        }
                         else
-                        {
+                        {  
                             a = b + (b = a) * 0;
                             element.setSelectionRange(~~a, ~~b);
+                            if (element.selectionStart == 0 && element.selectionEnd == 0)
+                                element.setSelectionRange(~~a, ~~b);  //BUG INPUT: w +space + w =[0,0] 
                             element.selectionDirection = "backward";
                         }
                     }
-                    element.focus();
+                    //element.focus();
                 }
                 var arr = [];
                 if (window.getSelection)
@@ -115,38 +119,43 @@
                     var t = element.value;
                     var l = t.substr(0, pl);
                     var r = t.substr(pr || pl);
-                    element.value = l + c + r;
+                    this.val(l + c + r);
+
+                    var cc = pl - pr + c.length; 
                     
                     //p[1] = p[0] += c.length
-                    var oo = [o[0] > pl ? o[0] + c.length : o[0], o[1] > pl ? o[1] + c.length : o[1]];
-                    this.IRange(goto_p ? [pl += c.length, pl] : oo); 
+                    var oo = [o[0] > pl ? o[0] + cc : o[0], o[1] >= pl ? o[1] + cc : o[1]];
+                    this.IRange(goto_p ? [pl += c.length, pl] : oo);
                 }
-                return element.value.slice(o._l, o._r);
+                return this.val().slice(o._l, o._r);
 
             };
  
 
 
             //server
-            var socket = io('ws://'+location.host+'/5adef4d0ce7db44447cbd14a7b7f9063',{ transports: ['websocket'] });
-            socket.on('connect', function (t) {
-                console.log('连接成功' + t); 
-                socket.emit('init@server' , function (cid) {
-                    InitClient(cid);
+            var socket = io('ws://'+location.host+'/5adef4d0ce7db44447cbd14a7b7f9063',{ transports: ['websocket'] }); 
+            function initClient() {
+                //检查服务器
+                $('.users em').each(function (index, elem) {
+                    alert(this.id);
+                    socket.emit('find@server', this.id, function (ids) {
+                        if (!ids.length) $(elem).remove();
+                    });
                 });
-            });  
-            function InitClient(cid) {
-                 
-
+                socket.emit('load_user@master', socket.id);
+                socket.emit('load_content@master', socket.id);
+                socket.emit("i in", socket.id, localStorage['name'] || socket.id);
+            }
+            socket.emit('init@server', function (cid) { 
                 //client       
-                socket.emit("i in", [cid, localStorage['name'] || cid]);
-                socket.on('i in', function (args) {
+                socket.on('i in', function (id,name) {
                     //添加新用户 已存在则忽略
-                    if (!$('#' + args[0]).length)
-                    { 
+                    if (!$('#' + id).length)
+                    {
                         $('<em type="button" onclick="setName(this)" class="label label-info" '
-                           + 'style="margin-right: 20px" title="' + args[0] + '" id="' + args[0] + '">'
-                           + '<i class="icon-tags"></i><b>' + args[1] + '</b></em>').appendTo($('.users'));
+                            + 'style="margin-right: 20px" title="' + id + '" id="' + id + '">'
+                            + '<i class="icon-tags"></i><b>' + name + '</b></em>').appendTo($('.users'));
                     }
                 });
 
@@ -154,11 +163,12 @@
                 socket.on('i out', function (cid) {
                     $('#' + cid).remove();
                 });
-                socket.on('i content', function (content) {
-                    $('#content').val(content);
-                })
                 socket.on('i sname', function (args) {
                     $('#' + args[0] + ' b').html(args[1]);
+                });
+                socket.on('i content', function (content) {
+                    $text.val(content);
+                    $t.val(content);
                 });
                 window.setName = function (s, e) {
                     if (!s || s.id == cid)
@@ -170,95 +180,142 @@
                 if (!localStorage['name']) window.setName();
 
 
-                //master
-                socket.emit('load_user@master', cid);
+                //master 
                 socket.on('load_user', function (c) {
                     $('.users em').each(function (elem) {
-                        socket.emit('i in', [this.id, $(this).find('b').html()], c);
+                        socket.emit('i in@' + c, this.id, $(this).find('b').html());
                     })
                 });
-                socket.emit('load_content@master', cid);
-                socket.on('load_content', function (c, m) {
-                    socket.emit('i content', $('#content').val(), c);
+                socket.on('load_content', function (c) {
+                    socket.emit('i content@' + c, $('#content').val());
                 });
-               
-            }
+          
+
+                //system
+                socket.on('connect', function (t) {
+                    console.log('重连成功' + t);//系统自动重新连接
+                    alert('init');
+                    initClient();
+                });
+                socket.on('error', function (err) {
+                    console.log('err');//系统断线
+                    alert('err');
+                });
+                initClient();
+            });
 
 
             //client    
-            function Mailer(delay, cb) {
-                var list = [];
-                var timer = null;
-                return function input(arr) {
-                    list.push(arr);
-                    if (!timer) timer = setTimeout(function () {
-                        cb(list);
-                        list = [];
-                        timer = null;
-                    }, delay);
-                }
+            function delayCall(delay, obj, cb) {
+                clearTimeout(obj.__timer);
+                obj.__timer = setTimeout(cb, delay); 
+            } 
+  
+            var $t = $('#pps');
+            var $text = $('#content');
+            new function Fixed() {
+                var inum
+                $t.on('compositionstart', function () {
+                    $t.addClass('ime');
+                    inum = 1;
+                }).on('compositionend', function () {
+                    $t.removeClass('ime');
+                    inum = 0;
+                }).on('keydown', function () {
+                    inum || $t.addClass('ime');
+                }).on('keyup', function T() {
+                    inum || $t.removeClass('ime');
+                });
             };
-            var put = Mailer(500, function (list) {
-                socket.emit("mail@other", list ); //send(list); list = [ {}, {}, ...];
-            });
+             $t.on('input', function T() {
+                 delayCall(600, T, function () {
+                     if ($t.is('.ime')) return T();
+                     var s1 = $text.val(), s2 = $t.val();
+                     meg(s1, s2, function (str1, str2, ml, mr) { 
+                         var p = [ml, s1.length - mr + 1];
+                         console.log(['emit>>', str2, p[0], p[1]]);
+                         socket.emit("mail", { t: str2, p: p });
+                     });
+                 });
+             });
+             socket.on("mail", function (item, mid) {
+                 new function T() {
+                     if ($t.is('.ime')) return setTimeout(T, 500);
 
-            var $text = $('textarea');
-            socket.on("mail", function (list, mid) {
-                list.map(function (item, i) {
-                    $text.IText(item.t, item.p); 
-                });
-            });
+                     // 6-7 > '123'
+                     // SELECT 6-7
+                     // ITEXT '456' 8-2
+                     // ITEXT '123' NOW
+                     // REP
 
-            
-            function IMEfix() {
-                function getTextPos() {
-                    //特定情况下的获取光标坐标 
-                    var npos = $text.IRange();
-                    $text.IRange([0, npos._r]);
-                    $('#pps').html($text.IText())
-                    $text.IRange(npos);
-                    return $('<i>I</i>').appendTo('#pps').offset();
-                }
-                var $t = $('<input class="ifl">').css(getTextPos()).appendTo('body').focus(); 
-                $t.on('keyup', function T(e) { 
-                    switch (true)
-                    {
-                        case !!this.value.match(/[^\w']/):
-                            $text.IText($t.val(), null, true);
-                        case !this.value:
-                            $text.focus();
-                            $t.remove();
-                        default:
-                    }
-                });
-            }
 
-            var otxt;
-            var opos;
-            $text.keydown(function (e) {
-                otxt = $text.IText();
-                opos = $text.IRange(); 
-                if (e.keyCode == '229') { setTimeout(IMEfix); e.stopPropagation(); return; }//阻止输入法预输入 
-                if (e.keyCode == '8') { put({ "p": $text.IRange(-1), "t": '' }); opos.lock = true;  } //删除键特殊处理
-                if (e.keyCode == '46') { put({ "p": $text.IRange(1), "t": '' }); opos.lock = true; } //退格键特殊处理
-                if (e.ctrlKey && e.keyCode == '90')
-                {/*
-                    opos.lock = true;
-                    otxt = $text.val();
-                    setTimeout(function () {
-                        var str = meg(otxt, $text.val());
-                        console.log(str);
+
+                     var p = $t.IRange();
+                     var lp = p;
+                     var ls = '';
+                     var s1 = $text.val(), s2 = $t.val();
+                     var eq = meg(s1, s2, function (str1, str2, ml, mr) {
+                         ls =str2;
+                         lp = [ml, s1.length - mr + 1];
+                         $text.IRange(lp);
+                         $text.IText(item.t, item.p);
+                         $text.IText(ls);
+                         $t.val($text.val());
+                         $t.IRange(p);
+                     });
+                     if (!eq)
+                     {
+                         $text.IRange(p);
+                         $text.IText(item.t, item.p); 
+                         $t.val($text.val());
+                         $t.IRange($text.IRange());
+
+                     }
+ 
+                     /*
+                    var s1 = $text.val(), s2 = $t.val();
+                    meg(s1, s2, function (str1, str2, ml, mr) {
+                        s1,s2
+                        var p = [ml, s2.length - mr + 1]; 
+                        $t.IText(str1, p, true);
+                        console.log(['<<<<<<', str1, p[0], p[1]]); 
                     });*/
-                    return false;//禁止撤销
-                }
-            }).on('input', function T(e) {
-                if (opos.lock) return;
+                     //$t.val($text.val());
+                 }
+             });
+
+          
+
+            /*.on('click', function () {
+                $t.css(getTextPos()).focus();;
+            }).on('keydown', function T(e) { 
+                if ($text.is('.ime')) return true;
+                if (e.keyCode == '8') { put({ "p": $text.IRange(-1), "t": '' }); opos.lock = true; } //删除键特殊处理
+                if (e.keyCode == '46') { put({ "p": $text.IRange(1), "t": '' }); opos.lock = true; } //退格键特殊处理
+                if (e.ctrlKey && e.keyCode == '90') { return false; }//禁止撤销
+                 
+                opos.lock = null;
+                otxt = $text.IText();
+                opos = $text.IRange();
+                
+            }).on('mousedown', function (e) { 
+                if (up) return e.preventDefault(), e.stopPropagation(), false; ;
+            })
+            $text.on('input', function (e) {
+
+
+                if ($text.is('.ime')) return true;
+                if (opos.lock != null) return opos.lock;
+
+
+
                 var npos = $text.IRange();
                 $text.IRange([opos._l, npos._r]);
                 var t = $text.IText();
-                put({ "p": opos, "t": t }); 
-                $text.IRange(npos);
-            });
-
+                put({ "p": opos, "t": t });
+                console.log(['OUT-----------------------------[' + t + ']', opos[0], opos[1]]);
+                $text.IRange(npos); 
+                return false;
+            }); */
         });
     </script>

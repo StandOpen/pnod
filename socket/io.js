@@ -143,7 +143,7 @@ module.exports = function T(io,server) {
                     socket.broadcast.emit.apply(socket.broadcast, s); //发送给其他人
                 else 
                 {
-                    var to = nf.to(ag[2]);
+                    var to = nf.to(ag[2].substr(1));
                     if (to) to.emit.apply(to, s);//发送到指定用户或用户组
                 }  
             };
@@ -234,5 +234,7 @@ module.exports = function T(io,server) {
                 }
             }
         }); 
-    } 
+    }
+
+    
 };
